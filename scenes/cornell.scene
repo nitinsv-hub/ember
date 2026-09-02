@@ -1,0 +1,7 @@
+mesh cornell.obj
+camera 278 273 -800  278 273 280  39.3
+resolution 640 640
+samples 512
+bounces 10
+exposure 1.0
+environment 0 0 0

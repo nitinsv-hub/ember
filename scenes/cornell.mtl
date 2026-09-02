@@ -1,0 +1,24 @@
+newmtl white
+Kd 0.725 0.710 0.680
+
+newmtl red
+Kd 0.630 0.065 0.050
+
+newmtl green
+Kd 0.140 0.450 0.091
+
+newmtl light
+Kd 0.780 0.780 0.780
+Ke 23.0 19.0 12.0
+
+newmtl brass
+Kd 0.30 0.24 0.10
+Ks 0.94 0.78 0.36
+Ns 340
+illum 3
+
+newmtl glass
+Kd 0.98 0.99 0.99
+Ni 1.52
+d 0.05
+illum 7
