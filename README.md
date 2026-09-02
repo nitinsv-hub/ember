@@ -64,7 +64,7 @@ Requires a C++20 compiler and a GPU driver. That is the whole dependency list.
 | Traversal | stackless-free explicit stack, slab test, Möller–Trumbore |
 | Integrator | unidirectional path tracing, next event estimation, MIS with the power heuristic |
 | Materials | Lambertian, GGX metal with Smith masking and Schlick Fresnel, smooth dielectric with total internal reflection |
-| Lights | emissive triangles sampled by area with a CDF, plus a cone-sampled sun |
+| Lights | single-sided emissive triangles sampled by area with a CDF, plus a cone-sampled sun |
 | Environment | vertical gradient sky |
 | Sampling | PCG32, cosine hemisphere, GGX half-vector, uniform cone, unbiased Russian roulette |
 | Output | ACES filmic PNG, optional 32-bit PFM |
@@ -123,8 +123,8 @@ Verified on Intel Iris Xe (Core i7-1360P), OpenCL 3.0 NEO driver 31.0.101.5186,
 Vulkan 1.3.271, built with MSVC 14.50 at `/W4` with no warnings.
 
 ```
-4440 triangles, 2803 bvh nodes, depth 19, built in 3 ms
-640x640 at 1024 spp, 10 bounces, traced in 43.8 s
+4440 triangles, 2803 bvh nodes, depth 19, built in 4 ms
+640x640 at 4096 spp, 10 bounces, traced in 156 s
 tier 1 (shared host allocation, zero copy)
 ```
 
@@ -170,5 +170,11 @@ machine exposes a single OpenCL platform.
   The sun is sampled explicitly and does not have this problem.
 - Caustics through dielectrics are noisy. `clamp` trades a little bias for a
   large variance reduction.
+- Convergence measured against an 8192 spp reference is 2.18x per 4x samples,
+  which is the expected 1/sqrt(N). The residual noise concentrates in dark
+  purely-indirect regions such as the Cornell ceiling, which the light faces
+  away from, and in dielectric caustics. Stratified or low-discrepancy sampling
+  is the next real improvement; delaying Russian roulette was measured and made
+  quality per second worse, so it was not adopted.
 - No hardware ray tracing path yet. `--list` reports whether `VK_KHR_ray_query`
   is available, which is where that will hook in.

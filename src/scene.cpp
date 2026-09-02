@@ -218,19 +218,6 @@ void load_obj_into(Scene& scene, const fs::path& path) {
         for (const Vec3& v : tri) scene.bounds.grow(v);
 }
 
-void frame_camera(Scene& scene) {
-    const Vec3 center = scene.bounds.center();
-    const Vec3 extent = scene.bounds.extent();
-    const float radius = std::max(0.001f, length(extent) * 0.5f);
-    const float distance = radius / std::sin(scene.camera.fov_degrees * 3.14159265f / 360.0f) * 0.95f;
-    const Vec3 offset = normalize({0.45f, 0.38f, -1.0f});
-    scene.camera.target = center;
-    scene.camera.position = center + offset * distance;
-
-    const float floor_clearance = scene.bounds.lo.y + extent.y * 0.05f;
-    if (scene.camera.position.y < floor_clearance) scene.camera.position.y = floor_clearance;
-}
-
 void apply_default_lighting(Scene& scene) {
     if (scene.has_emitters()) return;
     scene.sky.zenith = Vec3{0.12f, 0.22f, 0.50f};
@@ -328,6 +315,40 @@ Scene load_scene_file(const fs::path& path) {
     return scene;
 }
 
+}
+
+void frame_camera(Scene& scene) {
+    const Aabb& box = scene.bounds;
+    if (!box.valid()) return;
+
+    const Vec3 center = box.center();
+    const float half_fov = scene.camera.fov_degrees * 3.14159265f / 360.0f;
+    const float tan_v = std::tan(half_fov);
+    const float aspect = static_cast<float>(scene.settings.width) /
+                         std::max(1.0f, static_cast<float>(scene.settings.height));
+    const float tan_h = tan_v * aspect;
+
+    const Vec3 offset = normalize({0.5f, 0.34f, -1.0f});
+    const Vec3 right = normalize(cross(-offset, Vec3{0.0f, 1.0f, 0.0f}));
+    const Vec3 up = cross(right, -offset);
+
+    float distance = 0.0f;
+    for (int i = 0; i < 8; ++i) {
+        const Vec3 corner{(i & 1) ? box.hi.x : box.lo.x, (i & 2) ? box.hi.y : box.lo.y,
+                          (i & 4) ? box.hi.z : box.lo.z};
+        const Vec3 d = corner - center;
+        const float depth = dot(d, -offset);
+        distance = std::max(distance, std::abs(dot(d, up)) / tan_v + depth);
+        distance = std::max(distance, std::abs(dot(d, right)) / tan_h + depth);
+    }
+    distance = std::max(distance * 1.06f, 1e-3f);
+
+    scene.camera.target = center;
+    scene.camera.position = center + offset * distance;
+    scene.camera_auto = true;
+
+    const float clearance = box.lo.y + std::max(box.extent().y, 1e-3f) * 0.08f;
+    if (scene.camera.position.y < clearance) scene.camera.position.y = clearance;
 }
 
 bool Scene::has_emitters() const {

@@ -1,0 +1,9 @@
+mesh showcase.obj
+camera 780 470 -900  10 60 40  34
+resolution 900 600
+samples 2048
+bounces 8
+clamp 25
+exposure 1.0
+sky 0.10 0.19 0.45  0.46 0.55 0.70
+sun -0.35 0.46 0.72  3.1 2.9 2.55  2.0

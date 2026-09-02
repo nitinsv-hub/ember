@@ -66,6 +66,7 @@ struct Scene {
     Sun sun;
 
     Aabb bounds;
+    bool camera_auto = false;
 
     size_t triangle_count() const { return positions.size(); }
     bool has_emitters() const;
@@ -73,6 +74,7 @@ struct Scene {
 
 bool is_scene_input(const std::filesystem::path& path);
 Scene load_scene(const std::filesystem::path& path);
+void frame_camera(Scene& scene);
 std::vector<std::filesystem::path> collect_inputs(const std::filesystem::path& root);
 
 }

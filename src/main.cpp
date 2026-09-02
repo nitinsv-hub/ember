@@ -192,6 +192,7 @@ void apply_overrides(Scene& scene, const Options& options) {
     if (options.exposure >= 0.0f) scene.settings.exposure = options.exposure;
     if (options.clamp_value >= 0.0f) scene.settings.radiance_clamp = options.clamp_value;
     scene.settings.batch = std::max(1, std::min(scene.settings.batch, scene.settings.samples));
+    if (scene.camera_auto) frame_camera(scene);
 }
 
 fs::path output_path_for(const fs::path& input, const fs::path& root, bool directory_mode) {

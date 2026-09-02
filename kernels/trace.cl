@@ -342,8 +342,9 @@ __kernel void trace(__global float4 *accumulator,
                 shading_normal = -shading_normal;
 
             if (surface.emission.x > 0.0f || surface.emission.y > 0.0f || surface.emission.z > 0.0f) {
-                float cos_light = fabs(dot(hit.geometric_normal, dir));
-                if (specular || light_count == 0 || cos_light < 1e-6f) {
+                float cos_light = dot(hit.geometric_normal, -dir);
+                if (cos_light <= 1e-6f) {
+                } else if (specular || light_count == 0) {
                     radiance += throughput * surface.emission;
                 } else {
                     float pdf_light = (hit.t * hit.t) / fmax(cos_light * light_area, 1e-9f);
@@ -418,7 +419,7 @@ __kernel void trace(__global float4 *accumulator,
                     float distance = sqrt(distance2);
                     float3 wi = to_light / distance;
                     float cos_surface = dot(shading_normal, wi);
-                    float cos_light = fabs(dot(light_normal, wi));
+                    float cos_light = dot(light_normal, -wi);
 
                     if (cos_surface > 0.0f && cos_light > 1e-6f) {
                         Hit shadow;
