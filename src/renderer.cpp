@@ -246,6 +246,8 @@ ImageF Renderer::render(const Scene& scene, RenderStats& stats) {
         ++frame;
     }
     stats.trace_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    stats.cycles = frame;
+    stats.samples_per_cycle = settings.batch;
 
     context_.read(buffer_accumulator, accumulator, accumulator_bytes);
 

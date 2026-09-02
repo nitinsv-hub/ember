@@ -274,6 +274,9 @@ Scene load_scene_file(const fs::path& path) {
         } else if (key == "samples") {
             require(2);
             scene.settings.samples = std::stoi(tokens[1]);
+        } else if (key == "cycles") {
+            require(2);
+            scene.settings.cycles = std::max(0, std::stoi(tokens[1]));
         } else if (key == "bounces") {
             require(2);
             scene.settings.bounces = std::stoi(tokens[1]);

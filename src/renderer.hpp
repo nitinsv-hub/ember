@@ -18,6 +18,8 @@ struct RenderStats {
     size_t bvh_nodes = 0;
     int bvh_depth = 0;
     int emitters = 0;
+    int cycles = 0;
+    int samples_per_cycle = 0;
     InteropTier tier = InteropTier::Unavailable;
     bool vulkan_resolve = false;
     size_t non_finite_pixels = 0;

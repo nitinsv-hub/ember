@@ -35,7 +35,8 @@ struct RenderSettings {
     int width = 800;
     int height = 600;
     int samples = 256;
-    int batch = 32;
+    int batch = 4;
+    int cycles = 0;
     int bounces = 8;
     float exposure = 1.0f;
     float radiance_clamp = 0.0f;

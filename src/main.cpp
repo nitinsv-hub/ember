@@ -23,6 +23,7 @@ struct Options {
     int height = 0;
     int samples = 0;
     int bounces = 0;
+    int cycles = 0;
     float exposure = -1.0f;
     float clamp_value = -1.0f;
     bool list = false;
@@ -77,6 +78,7 @@ Options parse(int argc, char** argv) {
         else if (argument == "--height") options.height = to_int(value("--height"), "--height");
         else if (argument == "--samples") options.samples = to_int(value("--samples"), "--samples");
         else if (argument == "--bounces") options.bounces = to_int(value("--bounces"), "--bounces");
+        else if (argument == "-c" || argument == "--cycles") options.cycles = to_int(value("--cycles"), "--cycles");
         else if (argument == "--exposure") options.exposure = std::stof(value("--exposure"));
         else if (argument == "--clamp") options.clamp_value = std::stof(value("--clamp"));
         else if (argument == "--compare") {
@@ -191,6 +193,11 @@ void apply_overrides(Scene& scene, const Options& options) {
     if (options.bounces > 0) scene.settings.bounces = options.bounces;
     if (options.exposure >= 0.0f) scene.settings.exposure = options.exposure;
     if (options.clamp_value >= 0.0f) scene.settings.radiance_clamp = options.clamp_value;
+    if (options.cycles > 0) scene.settings.cycles = options.cycles;
+    if (scene.settings.cycles > 0) {
+        const int cycles = std::min(scene.settings.cycles, scene.settings.samples);
+        scene.settings.batch = (scene.settings.samples + cycles - 1) / cycles;
+    }
     scene.settings.batch = std::max(1, std::min(scene.settings.batch, scene.settings.samples));
     if (scene.camera_auto) frame_camera(scene);
 }
@@ -260,8 +267,9 @@ int run(const Options& options) {
             std::printf("  %d emitters, sun %s, sky %.2f %.2f %.2f\n", stats.emitters,
                         scene.sun.enabled ? "on" : "off", scene.sky.horizon.x, scene.sky.horizon.y,
                         scene.sky.horizon.z);
-            std::printf("  %dx%d at %d spp, %d bounces\n", image.width, image.height,
-                        scene.settings.samples, scene.settings.bounces);
+            std::printf("  %dx%d at %d spp, %d bounces, %d cycles of %d spp\n", image.width,
+                        image.height, scene.settings.samples, scene.settings.bounces, stats.cycles,
+                        stats.samples_per_cycle);
             std::printf("  traced in %.2f s, %.1f Mpaths/s\n", stats.trace_seconds,
                         rays_per_second / 1e6);
             std::printf("  radiance min %.3f mean %.3f max %.1f\n", stats.min_radiance,

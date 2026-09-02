@@ -27,6 +27,7 @@ renders every scene in the directory into `scenes/output/<name>.png`.
 --width N  --height N     override resolution
 --samples N               override samples per pixel
 --bounces N               override maximum path length
+-c N, --cycles N          split the render into N accumulation passes
 --exposure F              override tonemap exposure
 --clamp F                 clamp per-sample radiance, suppresses fireflies
 --hdr                     also write a .pfm alongside the png
@@ -84,6 +85,7 @@ camera 278 273 -800  278 273 280  39.3
 resolution 640 640
 samples 512
 bounces 10
+cycles 64
 exposure 1.0
 clamp 40
 environment 0 0 0
@@ -99,6 +101,29 @@ counts are reported with a file and line number.
 MTL mapping: `Ke` makes an emitter, `Ni` with `d < 1` or `illum 6/7` makes a
 dielectric, a bright `Ks` or `illum 3/5` makes a metal, and `Ns` converts to
 roughness. Everything else is Lambertian.
+
+## Cycles
+
+A render is accumulated over several passes rather than one long kernel launch.
+The engine derives the pass count as `ceil(samples / batch)`, where batch
+defaults to 4 samples per pass. `-c N` sets the pass count directly, so each
+pass carries `ceil(samples / N)` samples, and the reported line reads
+`N cycles of M spp`.
+
+Pass size matters more than it looks. Measured on Iris Xe at 640x640, 256 spp:
+
+| cycles | samples per pass | time |
+|---|---|---|
+| 8 | 32 | 10.99 s |
+| 64 | 4 | 8.59 s |
+| 256 | 1 | 8.30 s |
+
+Smaller passes win because a shorter per-thread sample loop lowers register
+pressure and lets more work items stay resident. The default of 4 captures most
+of that without issuing thousands of dispatches; a discrete GPU with higher
+launch overhead may prefer larger passes, so re-measure with `-c` when moving
+hardware. Every pass count converges to the same image, but pass size feeds the
+RNG seed, so two renders with different `-c` are not bit-identical.
 
 ## Interop tiers
 
@@ -124,7 +149,7 @@ Vulkan 1.3.271, built with MSVC 14.50 at `/W4` with no warnings.
 
 ```
 4440 triangles, 2803 bvh nodes, depth 19, built in 4 ms
-640x640 at 4096 spp, 10 bounces, traced in 156 s
+640x640 at 4096 spp, 10 bounces, 1024 cycles of 4 spp, traced in 139 s
 tier 1 (shared host allocation, zero copy)
 ```
 
